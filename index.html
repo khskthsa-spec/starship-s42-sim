@@ -97,7 +97,7 @@
 
   #note{position:fixed;left:14px;bottom:72px;max-width:300px;font-size:11.5px;color:rgba(233,238,243,.72);
     line-height:1.45;text-shadow:0 1px 3px rgba(0,0,0,.6)}
-  #toast{position:fixed;left:50%;top:22px;transform:translate(-50%,-12px);opacity:0;pointer-events:none;
+  #toast{position:fixed;left:50%;top:72px;transform:translate(-50%,-12px);opacity:0;pointer-events:none;
     background:rgba(16,40,28,.78);border:1px solid rgba(111,224,165,.45);color:#d6fbe7;padding:10px 18px;border-radius:999px;
     font-weight:600;font-size:14.5px;transition:all .5s;backdrop-filter:blur(8px)}
   #toast.show{opacity:1;transform:translate(-50%,0)}
@@ -120,6 +120,11 @@
     #tlabel{min-width:64px;font-size:12px}
     #toast{top:auto;bottom:80px}
   }
+  #nav{left:50%;transform:translateX(-50%);bottom:76px;padding:4px;display:flex;gap:2px;align-items:center}
+  #nav a{color:var(--mute);text-decoration:none;font:500 13px "Noto Sans Thai",sans-serif;padding:6px 12px;border-radius:8px}
+  #nav a:hover{color:var(--ink)}
+  #nav a.on{background:rgba(255,255,255,.12);color:var(--ink)}
+  #nav button{appearance:none;border:0;background:rgba(115,212,255,.14);color:#cfeeff;font:600 12.5px "Noto Sans Thai",sans-serif;padding:6px 11px;border-radius:8px;cursor:pointer}
 </style>
 <script type="importmap">
 { "imports": {
@@ -137,55 +142,59 @@
   <div class="title"><span class="dot"></span>STARSHIP · SHIP 42<span class="sub">V3 · Flight 15</span></div>
   <div id="phase" class="phase">—</div>
   <div class="grid">
-    <div><label>ความสูง</label><b id="alt">0</b><i>m</i></div>
-    <div><label>ความเร็วแนวดิ่ง</label><b id="vs">0</b><i>m/s</i></div>
-    <div><label>ความเร็วแนวราบ</label><b id="hs">0</b><i>m/s</i></div>
-    <div><label>มุมจากแนวตั้ง</label><b id="tilt">0</b><i>องศา</i></div>
-    <div><label>เครื่องยนต์ทำงาน</label><b id="eng">0</b><i>จาก 6</i></div>
-    <div><label>แรงขับ</label><b id="thr">0</b><i>%</i></div>
+    <div><label data-en="Altitude">ความสูง</label><b id="alt">0</b><i>m</i></div>
+    <div><label data-en="Vertical speed">ความเร็วแนวดิ่ง</label><b id="vs">0</b><i>m/s</i></div>
+    <div><label data-en="Horizontal speed">ความเร็วแนวราบ</label><b id="hs">0</b><i>m/s</i></div>
+    <div><label data-en="Tilt from vertical">มุมจากแนวตั้ง</label><b id="tilt">0</b><i data-en="deg">องศา</i></div>
+    <div><label data-en="Engines running">เครื่องยนต์ทำงาน</label><b id="eng">0</b><i data-en="of 6">จาก 6</i></div>
+    <div><label data-en="Throttle">แรงขับ</label><b id="thr">0</b><i>%</i></div>
   </div>
   <div class="tbar"><div id="thrbar"></div></div>
   <div class="envline" id="envline">—</div>
 </div>
 <div id="fpanel" class="panel xpanel">
-  <h4>แรงกระทำต่อยาน</h4>
-  <div class="frow"><span class="sw" style="background:#5b8cff"></span><span>แรงโน้มถ่วง (น้ำหนัก)</span><b id="fW">0</b></div>
-  <div class="frow"><span class="sw" style="background:#5fe3e0"></span><span>แรงต้านอากาศ</span><b id="fD">0</b></div>
-  <div class="frow"><span class="sw" style="background:#ff9a3c"></span><span>แรงขับเครื่องยนต์</span><b id="fT">0</b></div>
-  <div class="frow"><span class="sw" style="background:#7be08a"></span><span>แรงจากแขนจับ (รวม)</span><b id="fR">0</b></div>
-  <div class="frow"><span class="sw" style="background:#ffffff"></span><span>แรงลัพธ์</span><b id="fN">0</b></div>
-  <div class="frow"><span></span><span>แรง g ที่รู้สึกบนยาน</span><b id="fG">0</b></div>
-  <div class="small">หน่วย MN (เมกะนิวตัน) · สมมติมวลขณะลงจอด ~140 ตัน · คำนวณจากเส้นทางจำลองด้วย F = ma ไม่ใช่ข้อมูลจริง</div>
+  <h4 data-en="Forces on the ship">แรงกระทำต่อยาน</h4>
+  <div class="frow"><span class="sw" style="background:#5b8cff"></span><span data-en="Gravity (weight)">แรงโน้มถ่วง (น้ำหนัก)</span><b id="fW">0</b></div>
+  <div class="frow"><span class="sw" style="background:#5fe3e0"></span><span data-en="Aerodynamic drag">แรงต้านอากาศ</span><b id="fD">0</b></div>
+  <div class="frow"><span class="sw" style="background:#ff9a3c"></span><span data-en="Engine thrust">แรงขับเครื่องยนต์</span><b id="fT">0</b></div>
+  <div class="frow"><span class="sw" style="background:#7be08a"></span><span data-en="Arm / stand reaction (total)">แรงจากแขน / แท่นรอง (รวม)</span><b id="fR">0</b></div>
+  <div class="frow"><span class="sw" style="background:#ffffff"></span><span data-en="Net force">แรงลัพธ์</span><b id="fN">0</b></div>
+  <div class="frow"><span></span><span data-en="g-load felt on board">แรง g ที่รู้สึกบนยาน</span><b id="fG">0</b></div>
+  <div class="small" data-en="Units: MN (meganewtons) · assumed landing mass ~140 t · computed from the scripted path with F = ma, not flight data">หน่วย MN (เมกะนิวตัน) · สมมติมวลขณะลงจอด ~140 ตัน · คำนวณจากเส้นทางจำลองด้วย F = ma ไม่ใช่ข้อมูลจริง</div>
 </div>
 <div id="tpanel" class="panel xpanel">
-  <h4>อุณหภูมิผิวยาน (°C)</h4>
+  <h4 data-en="Surface temperature (°C)">อุณหภูมิผิวยาน (°C)</h4>
   <div id="legend" class="legend"></div>
   <div class="lticks"><span>0</span><span>500</span><span>1000</span><span>1500</span></div>
   <div id="tspots"></div>
-  <div class="small">ชี้เมาส์ (หรือแตะ) บนตัวยานเพื่ออ่านค่าแต่ละจุด · ค่าประมาณเพื่อประกอบภาพ ไม่ใช่ข้อมูลวัดจริง</div>
+  <div class="small" data-en="Hover (or tap) the ship to read a point · illustrative estimates, not measured data">ชี้เมาส์ (หรือแตะ) บนตัวยานเพื่ออ่านค่าแต่ละจุด · ค่าประมาณเพื่อประกอบภาพ ไม่ใช่ข้อมูลวัดจริง</div>
 </div>
 </div>
 <div id="probe"></div>
 <div id="flabels"></div>
 
 <div id="cams" class="panel seg">
-  <button data-cam="follow" class="on">ติดตามยาน</button>
-  <button data-cam="tower">กล้องภาคพื้น</button>
-  <button data-cam="free">มุมอิสระ</button>
+  <button data-cam="follow" class="on" data-en="Follow ship">ติดตามยาน</button>
+  <button data-cam="tower" data-en="Ground camera">กล้องภาคพื้น</button>
+  <button data-cam="free" data-en="Free view">มุมอิสระ</button>
   <span class="sep"></span>
-  <button class="tog" data-tog="force">แรงกระทำ</button>
-  <button class="tog" data-tog="temp">อุณหภูมิ</button>
-  <button class="tog" data-tog="sound">🔇 เสียง</button>
+  <button class="tog" data-tog="force" data-en="Forces">แรงกระทำ</button>
+  <button class="tog" data-tog="temp" data-en="Temperature">อุณหภูมิ</button>
+  <button class="tog" data-tog="sound" id="soundBtn">🔇 เสียง</button>
 </div>
 
-<div id="log" class="panel"><h4>ลำดับเหตุการณ์</h4><ol id="events"></ol></div>
-<div id="toast">จับยานด้วยแขน Chopsticks สำเร็จ</div>
-<div id="note">แอนิเมชันประกอบความเข้าใจ ย่อเวลาและลำดับขั้นให้ดูง่าย ไม่ใช่ข้อมูลจริงของเที่ยวบิน · ลากเพื่อหมุนกล้อง เลื่อนล้อเมาส์เพื่อซูม · Space = เล่น/หยุด</div>
+<div id="log" class="panel"><h4 data-en="Sequence of events">ลำดับเหตุการณ์</h4><ol id="events"></ol></div>
+<div id="toast"></div>
+<div id="note" data-en="Illustrative animation with a compressed, simplified sequence, not real flight data · Drag to orbit, scroll to zoom · Space = play/pause">แอนิเมชันประกอบความเข้าใจ ย่อเวลาและลำดับขั้นให้ดูง่าย ไม่ใช่ข้อมูลจริงของเที่ยวบิน · ลากเพื่อหมุนกล้อง เลื่อนล้อเมาส์เพื่อซูม · Space = เล่น/หยุด</div>
+
+<nav id="nav" class="panel">
+  <button id="langBtn">English</button>
+</nav>
 
 <div id="controls" class="panel">
   <button class="ibtn" id="play" title="เล่น/หยุด">❚❚</button>
   <button class="ibtn" id="restart" title="เริ่มใหม่">↺</button>
-  <div class="tl"><input type="range" id="scrub" min="0" max="34" step="0.01" value="0"><div id="marks"></div></div>
+  <div class="tl"><input type="range" id="scrub" min="0" max="82" step="0.01" value="0"><div id="marks"></div></div>
   <span id="tlabel">T+0.0 s</span>
   <div class="seg" id="speeds">
     <button data-s="0.5">0.5×</button><button data-s="1" class="on">1×</button><button data-s="2">2×</button><button data-s="4">4×</button>
@@ -197,8 +206,18 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 
+/* ---------------- language ---------------- */
+let LANG = 'th';
+try { LANG = new URLSearchParams(location.search).get('lang') || localStorage.getItem('simLang') || 'th'; } catch (e) { }
+if (LANG !== 'en') LANG = 'th';
+const tr = (th, en) => LANG === 'en' ? en : th;
+
 /* ---------------- constants ---------------- */
-const T_END = 34;
+const ENVX = {};
+const T_VENT0 = 29.5, T_VENT1 = 40, T_SW0 = 42, T_SW1 = 48.5, T_LOW0 = 49, T_SET = 62, T_REL = 63.5, T_GO0 = 67, T_GO1 = 80;
+const SWING = 70, HC_LOW = 40, STAND_TOP = 4;
+
+const T_END = 82;
 const HC = 110;              // top of catch arms (m)
 const R = 4.5;               // ship radius (9 m diameter)
 const SHIP_H = 52;           // V3 ship height (approx.)
@@ -512,15 +531,17 @@ const TX = 22, TW = 7, TH = 150;
   inst.count = n; scene.add(inst);
   mk(new THREE.BoxGeometry(16, 3, 16), towerMat, TX, TH + 1.5, 0);
   mk(new THREE.CylinderGeometry(0.25, 0.4, 22, 8), lightSteel, TX + 4, TH + 14, 4);
-  mk(new THREE.BoxGeometry(3.5, 8, 15), lightSteel, TX - TW - 1.2, HC - 3, 0); // carriage
+  ENVX.carriage = mk(new THREE.BoxGeometry(3.5, 8, 15), lightSteel, TX - TW - 1.2, HC - 3, 0); // carriage
   // tank farm & buildings for scale
   for (let i = 0; i < 6; i++) mk(new THREE.CylinderGeometry(4, 4, 26, 24), new THREE.MeshStandardMaterial({ color: 0xdfe2e5, metalness: .7, roughness: .3 }), 85 + (i % 3) * 11, 13, -70 + Math.floor(i / 3) * 11);
   mk(new THREE.BoxGeometry(40, 14, 24), new THREE.MeshStandardMaterial({ color: 0xb9bcbf, roughness: .8 }), 110, 7, 70);
 }
 // chopsticks arms
 const arms = [];
+const RIG_X = TX - TW - 1;
+const rig = new THREE.Group(); rig.position.set(RIG_X, 0, 0); scene.add(rig);
 for (const s of [1, -1]) {
-  const pivot = new THREE.Group(); pivot.position.set(TX - TW - 1, HC, s * 6.0); scene.add(pivot);
+  const pivot = new THREE.Group(); pivot.position.set(0, HC, s * 6.0); rig.add(pivot);
   const arm = new THREE.Group(); arm.position.set(-16, 0, 0); pivot.add(arm);
   const parts = [
     [new THREE.BoxGeometry(32, 0.8, 1.6), towerMat, 0, -0.4, 0],
@@ -714,6 +735,64 @@ function atmos(h) {
   return { T, rho: p / (287.05 * Tk), wind: 6 + 0.004 * h };
 }
 
+/* ---------------- post-catch: transporter, stand, venting vapour ---------------- */
+{
+  const g = new THREE.Group(); scene.add(g); ENVX.spmt = g;
+  const yel = new THREE.MeshStandardMaterial({ color: 0xd9a21b, roughness: .6, metalness: .3 });
+  const dk = new THREE.MeshStandardMaterial({ color: 0x1d1f22, roughness: .9 });
+  const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = m.receiveShadow = true; g.add(m); return m; };
+  add(new THREE.BoxGeometry(14, 0.9, 12), yel, 0, 1.25, 0);
+  for (let i = 0; i < 6; i++) for (const zz of [-4.8, -1.6, 1.6, 4.8]) { const w = add(new THREE.CylinderGeometry(0.45, 0.45, 0.5, 14), dk, -5.5 + i * 2.2, 0.45, zz); w.rotation.x = Math.PI / 2; }
+  add(new THREE.BoxGeometry(1.6, 1.4, 2.2), new THREE.MeshStandardMaterial({ color: 0xe8e8e8, roughness: .6 }), 7.2, 1.6, 0);
+  const steel = new THREE.MeshStandardMaterial({ color: 0x8f959b, metalness: .6, roughness: .45 });
+  const ring = add(new THREE.TorusGeometry(4.6, 0.35, 10, 40), steel, 0, STAND_TOP - 0.35, 0); ring.rotation.x = Math.PI / 2;
+  for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; add(new THREE.BoxGeometry(0.6, STAND_TOP - 1.7, 0.6), steel, 4.6 * Math.cos(a), (STAND_TOP + 1.7) / 2, 4.6 * Math.sin(a)); }
+}
+const VN = 600;
+const vPos = new Float32Array(VN * 3), vVel = new Float32Array(VN * 3), vLife = new Float32Array(VN), vMax = new Float32Array(VN), vSize = new Float32Array(VN), vAlpha = new Float32Array(VN);
+const vGeo = new THREE.BufferGeometry();
+vGeo.setAttribute('position', new THREE.BufferAttribute(vPos, 3)); vGeo.setAttribute('aSize', new THREE.BufferAttribute(vSize, 1)); vGeo.setAttribute('aAlpha', new THREE.BufferAttribute(vAlpha, 1));
+const vMat = new THREE.ShaderMaterial({
+  uniforms: { uHalfH: { value: innerHeight * 0.5 * Math.min(devicePixelRatio, 2) } },
+  vertexShader: `attribute float aSize; attribute float aAlpha; varying float vA; uniform float uHalfH;
+    void main(){ vA = aAlpha; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = aSize * projectionMatrix[1][1] * uHalfH / -mv.z; gl_Position = projectionMatrix * mv; }`,
+  fragmentShader: `varying float vA; void main(){ float r = length(gl_PointCoord - 0.5) * 2.0; float a = vA * smoothstep(1.0, 0.1, r); if (a < 0.01) discard; gl_FragColor = vec4(0.94, 0.96, 0.98, a); }`,
+  transparent: true, depthWrite: false
+});
+const vPts = new THREE.Points(vGeo, vMat); vPts.frustumCulled = false; scene.add(vPts);
+let vHead = 0, lastPostRt = 0, ventAcc = 0;
+const VENTS = [[-3.9, 47, 0, -1, 0.3, 0], [0, 3, 4.6, 0, 0, 1], [0, 3, -4.6, 0, 0, -1], [-4.6, 30, 0, -1, 0, 0]];
+function postUpdate(t, rt) {
+  const dt = clamp(rt - lastPostRt, 0, 0.05); lastPostRt = rt;
+  const ph = (typeof swingDeg === 'function') ? swingDeg(t) : 0;
+  ENVX.spmt.position.set(XS, 0, spmtZ(t)); ENVX.spmt.rotation.y = 0;
+  // venting
+  const venting = t > T_VENT0 && t < T_VENT1 ? (0.6 + 0.4 * Math.sin(t * 1.7)) * (1 - smooth(T_VENT1 - 2, T_VENT1, t)) : 0;
+  if (playing && venting > 0) {
+    ventAcc += dt * 90 * venting;
+    while (ventAcc >= 1) {
+      ventAcc -= 1;
+      const v = VENTS[Math.floor(Math.random() * VENTS.length)], i = vHead; vHead = (vHead + 1) % VN;
+      const wp = body.localToWorld(new THREE.Vector3(v[0], v[1], v[2]));
+      const dir = new THREE.Vector3(v[3], v[4], v[5]).applyQuaternion(ship.quaternion);
+      vPos[i * 3] = wp.x; vPos[i * 3 + 1] = wp.y; vPos[i * 3 + 2] = wp.z;
+      const sp = 5 + Math.random() * 5;
+      vVel[i * 3] = dir.x * sp + (Math.random() - 0.5) * 2; vVel[i * 3 + 1] = dir.y * sp + 0.5 + Math.random(); vVel[i * 3 + 2] = dir.z * sp + (Math.random() - 0.5) * 2;
+      vMax[i] = vLife[i] = 3 + Math.random() * 2.5;
+    }
+  }
+  for (let i = 0; i < VN; i++) {
+    if (vLife[i] <= 0) { vAlpha[i] = 0; continue; }
+    vLife[i] -= dt;
+    const k = 1 - Math.max(0, vLife[i]) / vMax[i];
+    vVel[i * 3] = vVel[i * 3] * 0.97 + 2.6 * dt; vVel[i * 3 + 1] = vVel[i * 3 + 1] * 0.98 + 0.4 * dt; vVel[i * 3 + 2] = vVel[i * 3 + 2] * 0.97 - 1.6 * dt;
+    vPos[i * 3] += vVel[i * 3] * dt; vPos[i * 3 + 1] += vVel[i * 3 + 1] * dt; vPos[i * 3 + 2] += vVel[i * 3 + 2] * dt;
+    vSize[i] = 2 + 13 * Math.sqrt(k); vAlpha[i] = 0.55 * (1 - k) * Math.min(1, k * 8);
+  }
+  vGeo.attributes.position.needsUpdate = vGeo.attributes.aSize.needsUpdate = vGeo.attributes.aAlpha.needsUpdate = true;
+}
+addEventListener('resize', () => { vMat.uniforms.uHalfH.value = innerHeight * 0.5 * Math.min(devicePixelRatio, 2); });
+
 /* ---------------- trajectory (scripted) ---------------- */
 const K = [
   { t: 0, x: -230, y: 1825, vx: 6, vy: -85 },
@@ -732,7 +811,23 @@ function herm(p0, v0, p1, v1, dt, s) {
   const s2 = s * s, s3 = s2 * s;
   return (2 * s3 - 3 * s2 + 1) * p0 + (s3 - 2 * s2 + s) * dt * v0 + (-2 * s3 + 3 * s2) * p1 + (s3 - s2) * dt * v1;
 }
+/* ---- post-catch sequence ---- */
+const swingDeg = t => SWING * smooth(T_SW0, T_SW1, t);
+const armSwingDeg = t => swingDeg(t) * (1 - smooth(70, 78, t));
+const XS = RIG_X - RIG_X * Math.cos(SWING * Math.PI / 180), ZS = RIG_X * Math.sin(SWING * Math.PI / 180);
+function carriage(t) {
+  if (t < T_LOW0) return HC;
+  if (t < T_SET) return HC - (HC - HC_LOW) * smooth(T_LOW0, T_SET, t);
+  return HC_LOW - 0.8 * smooth(T_SET, T_REL, t) + (100 - HC_LOW + 0.8) * smooth(66, 78, t);
+}
+const spmtZ = t => t < T_GO0 ? ZS + 75 * (1 - smooth(30, 44, t)) : ZS + 75 * smooth(T_GO0, T_GO1, t);
 function shipPos(t) {
+  if (t >= T_CONTACT) {
+    const ph = swingDeg(t) * Math.PI / 180;
+    if (t >= T_SET) return { x: XS, y: STAND_TOP + CENTER_OFF + (t > T_GO0 && t < T_GO1 ? 0.04 * Math.sin(t * 9) : 0), z: spmtZ(t), yaw: ph };
+    const y = (t < T_LOW0 ? REST_Y + armDip(t) : carriage(t) - PIN_Y + CENTER_OFF);
+    return { x: RIG_X - RIG_X * Math.cos(ph), y, z: RIG_X * Math.sin(ph), yaw: ph };
+  }
   for (let i = 0; i < K.length - 1; i++) {
     const a = K[i], b = K[i + 1];
     if (t <= b.t) {
@@ -758,7 +853,7 @@ function throttle(t) {
   if (t < T_CUT) return 1 - 0.45 * smooth(24.5, 26, t);
   return 0.55 * (1 - smooth(T_CUT, T_CUT + 0.25, t));
 }
-const armOpen = t => 38 * (1 - smooth(25, 27.3, t));
+const armOpen = t => 38 * (1 - smooth(25, 27.3, t)) + 38 * smooth(T_REL, 66, t);
 function flapAngles(t, rt) {
   const fold = smooth(15, 19.5, t);
   const fwd = (5 + 7 * Math.sin(1.3 * t)) * (1 - fold) + 32 * fold;
@@ -766,26 +861,41 @@ function flapAngles(t, rt) {
   return { fwd, aft };
 }
 const EVENTS = [
-  [0, 'เริ่มที่ความสูง ~1.8 กม. ร่อนลงแนวนอน (belly flop) ใช้แผ่นปีกคุมทิศ'],
-  [14, 'จุดเครื่อง Raptor sea-level 3 เครื่อง เริ่มกลับลำ (flip)'],
-  [17.6, 'ลำยานตั้งเกือบตรง'],
-  [19.5, 'Landing burn ชะลอความเร็วและเล็งเข้าหาหอ'],
-  [25, 'แขน Chopsticks เริ่มหุบเข้าหาลำยาน'],
-  [T_CUT, 'ดับเครื่องยนต์'],
-  [T_CONTACT, 'สลักรับน้ำหนักวางบนแขน — จับยานสำเร็จ'],
+  [0, 'เริ่มที่ความสูง ~1.8 กม. ร่อนลงแนวนอน (belly flop) ใช้แผ่นปีกคุมทิศ', 'Start at ~1.8 km in a horizontal belly-flop, steering with the flaps'],
+  [14, 'จุดเครื่อง Raptor sea-level 3 เครื่อง เริ่มกลับลำ (flip)', 'Three sea-level Raptors ignite; flip begins'],
+  [17.6, 'ลำยานตั้งเกือบตรง', 'Ship nearly vertical'],
+  [19.5, 'Landing burn ชะลอความเร็วและเล็งเข้าหาหอ', 'Landing burn: slowing down and steering to the tower'],
+  [25, 'แขน Chopsticks เริ่มหุบเข้าหาลำยาน', 'Chopstick arms start closing'],
+  [T_CUT, 'ดับเครื่องยนต์', 'Engine cutoff'],
+  [T_CONTACT, 'สลักรับน้ำหนักวางบนแขน — จับยานสำเร็จ', 'Catch pins settle on the arms: catch complete'],
+  [T_VENT0, 'Safing: ระบายเชื้อเพลิงที่เหลือและลดแรงดันในถัง', 'Safing: venting leftover propellant and depressurising tanks'],
+  [T_VENT1, 'ปิดระบบไฟฟ้า ยานอยู่ในสถานะปลอดภัย', 'Power down: vehicle is safe'],
+  [T_SW0, 'แขนหมุนพายานออกจากเหนือฐานปล่อย', 'Arms swing the ship clear of the launch mount'],
+  [T_LOW0, 'เลื่อนแขนลง พายานลงสู่พื้น', 'Carriage lowers the ship toward the ground'],
+  [T_SET, 'วางยานบนแท่นรองที่อยู่บนรถขนย้าย', 'Ship set down on a stand on the transporter'],
+  [T_REL, 'แขนเปิด ปล่อยยาน', 'Arms open and release the ship'],
+  [T_GO0, 'รถขนย้าย (SPMT) พายานไปอาคารตรวจสภาพ', 'Transporter (SPMT) carries the ship to the hangar for inspection'],
 ];
 function phaseOf(t) {
-  if (t < 14) return ['Belly flop — ร่อนลงแนวนอน', ''];
-  if (t < 19.5) return ['Flip — จุดเครื่องและกลับลำตั้งตรง', 'burn'];
-  if (t < 25) return ['Landing burn — ชะลอความเร็ว', 'burn'];
-  if (t < T_CUT) return ['Catch — แขน Chopsticks หุบเข้า', 'burn'];
-  if (t < T_CONTACT + 0.5) return ['ดับเครื่อง — วางลงบนแขน', ''];
-  return ['จับยานสำเร็จ ✓', 'done'];
+  if (t < 14) return [tr('Belly flop — ร่อนลงแนวนอน', 'Belly flop: horizontal descent'), ''];
+  if (t < 19.5) return [tr('Flip — จุดเครื่องและกลับลำตั้งตรง', 'Flip: ignition and turn to vertical'), 'burn'];
+  if (t < 25) return [tr('Landing burn — ชะลอความเร็ว', 'Landing burn: slowing down'), 'burn'];
+  if (t < T_CUT) return [tr('Catch — แขน Chopsticks หุบเข้า', 'Catch: chopstick arms closing'), 'burn'];
+  if (t < T_CONTACT + 0.5) return [tr('ดับเครื่อง — วางลงบนแขน', 'Engines off: settling onto the arms'), ''];
+  if (t < T_VENT0) return [tr('จับยานสำเร็จ ✓', 'Caught successfully ✓'), 'done'];
+  if (t < T_VENT1) return [tr('Safing — ระบายเชื้อเพลิงและแรงดัน', 'Safing: venting propellant and pressure'), ''];
+  if (t < T_SW0) return [tr('ปิดระบบ — ยานปลอดภัย', 'Powered down: vehicle safe'), ''];
+  if (t < T_SW1) return [tr('หมุนแขนพายานออกจากฐานปล่อย', 'Swinging the ship clear of the mount'), ''];
+  if (t < T_SET) return [tr('เลื่อนแขนลงสู่พื้น', 'Lowering the ship'), ''];
+  if (t < T_GO0) return [tr('วางบนแท่นรอง / ปล่อยแขน', 'Set down / arms release'), ''];
+  if (t < T_GO1) return [tr('ขนย้ายไปอาคารตรวจสภาพ', 'Transporting to the hangar'), ''];
+  return [tr('ถึงอาคาร — พร้อมตรวจสภาพ ✓', 'At the hangar: ready for inspection ✓'), 'done'];
 }
 
 /* ---------------- thermal overlay ---------------- */
-const PART = new Map([[steelMat, 'ผิวสแตนเลส (ด้านหลังลม)'], [steelNoseMat, 'ผิวสแตนเลสส่วนจมูก'], [tileMat, 'แผ่นกันความร้อน'],
-  [tileNoseMat, 'แผ่นกันความร้อนส่วนจมูก'], [flapMat, 'แผ่นปีก'], [bellMat, 'ระฆังเครื่องยนต์'], [darkMat, 'ฐานท้ายยาน']]);
+const PARTN = new Map([[steelMat, ['ผิวสแตนเลส (ด้านหลังลม)', 'Stainless skin (leeward)']], [steelNoseMat, ['ผิวสแตนเลสส่วนจมูก', 'Stainless nose skin']], [tileMat, ['แผ่นกันความร้อน', 'Heat-shield tiles']],
+  [tileNoseMat, ['แผ่นกันความร้อนส่วนจมูก', 'Nose heat-shield tiles']], [flapMat, ['แผ่นปีก', 'Flap']], [bellMat, ['ระฆังเครื่องยนต์', 'Engine bell']], [darkMat, ['ฐานท้ายยาน', 'Aft bulkhead']]]);
+const PART = { has: m => PARTN.has(m), get: m => tr(...PARTN.get(m)) };
 const shipMeshes = [];
 body.traverse(o => { if (o.isMesh && PART.has(o.material)) { o.userData.orig = o.material; shipMeshes.push(o); } });
 const plasmaShell = body.children.find(o => o.material === plasmaMat);
@@ -860,14 +970,15 @@ const thermalMat = new THREE.ShaderMaterial({
 document.getElementById('legend').style.background =
   `linear-gradient(90deg, ${Array.from({ length: 11 }, (_, i) => tCss(i * 150)).join(',')})`;
 const SPOTS = [
-  ['ปลายจมูก ด้านรับลม', { x: 2.4, y: 48.5, z: 0 }],
-  ['แผ่นกันความร้อน กลางลำ', { x: R, y: 17, z: 0 }],
-  ['แผ่นปีกหลัง (ขอบนอก)', { x: -0.6, y: 10, z: 8.5 }],
-  ['ผิวสแตนเลส ด้านหลังลม', { x: -R, y: 17, z: 0 }],
-  ['ระฆังเครื่องยนต์ sea-level', { x: 1.08, y: -0.8, z: 0.62 }],
+  ['ปลายจมูก ด้านรับลม', 'Nose tip (windward)', { x: 2.4, y: 48.5, z: 0 }],
+  ['แผ่นกันความร้อน กลางลำ', 'Heat shield, mid-body', { x: R, y: 17, z: 0 }],
+  ['แผ่นปีกหลัง (ขอบนอก)', 'Aft flap (outer edge)', { x: -0.6, y: 10, z: 8.5 }],
+  ['ผิวสแตนเลส ด้านหลังลม', 'Stainless skin, leeward', { x: -R, y: 17, z: 0 }],
+  ['ระฆังเครื่องยนต์ sea-level', 'Sea-level engine bell', { x: 1.08, y: -0.8, z: 0.62 }],
 ];
 const tspots = document.getElementById('tspots');
-tspots.innerHTML = SPOTS.map(([n], i) => `<div class="frow"><span class="sw" id="tsw${i}"></span><span>${n}</span><b id="tsv${i}">0</b></div>`).join('');
+const renderSpots = () => { tspots.innerHTML = SPOTS.map(([th, en], i) => `<div class="frow"><span class="sw" id="tsw${i}"></span><span>${tr(th, en)}</span><b id="tsv${i}">0</b></div>`).join(''); };
+renderSpots();
 
 /* ---------------- forces overlay ---------------- */
 const MASS = 140000, G = 9.81, W = MASS * G, MN = 1e6, ARROW_PER_MN = 7;
@@ -940,6 +1051,9 @@ function initAudio() {
   A.hyd = ctx.createOscillator(); A.hyd.type = 'sawtooth'; A.hyd.frequency.value = 95; A.hyd.start();
   A.hydG = gain(); chain(A.hyd, filt('bandpass', 620, 5), A.hydG);
   A.ambG = gain(); A.ambG.gain.value = 0.05; chain(loop(A.brown), filt('lowpass', 280), A.ambG);
+  A.ventF = filt('highpass', 1600); A.ventG = gain(); chain(loop(A.white), A.ventF, A.ventG);
+  const mot = ctx.createOscillator(); mot.type = 'sawtooth'; mot.frequency.value = 62; mot.start();
+  A.motG = gain(); chain(mot, filt('lowpass', 240), A.motG);
 }
 function oneShot({ f0 = 90, f1 = 30, dur = 0.9, g = 1, noise = 0.6, nf = 900, partials = [] }) {
   const c = A.ctx, t0 = c.currentTime;
@@ -977,13 +1091,19 @@ function audioUpdate(t, prevT) {
   A.engF.frequency.setTargetAtTime(220 + 1500 * att, now, k);
   A.crG.gain.setValueAtTime(thr * att * (0.06 + 0.7 * Math.random() ** 4), now);
   A.rumG.gain.setTargetAtTime(0.4 * thr * sa, now, 0.04);
-  const armMoving = t > 25 && t < 27.3;
+  const armMoving = (t > 25 && t < 27.3) || (t > T_SW0 && t < T_SW1) || (t > T_LOW0 && t < T_SET) || (t > T_REL && t < 66) || (t > 66 && t < 78);
+  const vent = t > T_VENT0 && t < T_VENT1 ? (0.6 + 0.4 * Math.sin(t * 1.7)) * (1 - smooth(T_VENT1 - 2, T_VENT1, t)) : 0;
+  A.ventG.gain.setTargetAtTime(0.32 * vent * sa, now, 0.1);
+  const driving = (t > 30 && t < 44) || (t > T_GO0 && t < T_GO1);
+  A.motG.gain.setTargetAtTime(driving ? 0.12 * sa : 0, now, 0.2);
   A.hydG.gain.setTargetAtTime(armMoving ? 0.07 * sa : 0, now, 0.06);
   A.hyd.frequency.setTargetAtTime(90 + 50 * smooth(25, 27.3, t), now, 0.1);
   const crossed = E => prevT < E && t >= E && t - prevT < 0.5;
   if (crossed(14)) oneShot({ f0: 120, f1: 35, dur: 1.2, g: 0.9 * sa, noise: 0.8, nf: 1400 });
   if (crossed(25)) oneShot({ f0: 220, f1: 140, dur: 0.25, g: 0.25 * sa, noise: 0.3, nf: 2500 });
   if (crossed(T_CUT)) oneShot({ f0: 80, f1: 30, dur: 0.7, g: 0.5 * sa, noise: 0.5, nf: 600 });
+  if (crossed(T_SET)) oneShot({ f0: 70, f1: 30, dur: 0.9, g: 0.6 * sa, noise: 0.5, nf: 900, partials: [210, 460] });
+  if (crossed(T_REL)) oneShot({ f0: 180, f1: 90, dur: 0.3, g: 0.3 * sa, noise: 0.3, nf: 2200 });
   if (crossed(T_CONTACT)) oneShot({ f0: 75, f1: 28, dur: 1.4, g: 1.0 * sa, noise: 0.7, nf: 1800, partials: [182, 421, 693, 1127, 1806] });
 }
 
@@ -1013,8 +1133,21 @@ function setCam(mode) {
 const $ = id => document.getElementById(id);
 const ui = { alt: $('alt'), vs: $('vs'), hs: $('hs'), tilt: $('tilt'), eng: $('eng'), thr: $('thr'), thrbar: $('thrbar'),
   phase: $('phase'), scrub: $('scrub'), tlabel: $('tlabel'), play: $('play'), toast: $('toast'), events: $('events') };
-ui.events.innerHTML = EVENTS.map(([t, txt]) => `<li><span class="t">T+${t.toFixed(1)}</span><span>${txt}</span></li>`).join('');
-const evEls = [...ui.events.children];
+let evEls = [];
+function renderEvents() {
+  ui.events.innerHTML = EVENTS.map(([et, th, en]) => `<li><span class="t">T+${et.toFixed(1)}</span><span>${tr(th, en)}</span></li>`).join('');
+  evEls = [...ui.events.children]; lastEvCount = -1;
+}
+function soundLabel() { $('soundBtn').textContent = (soundOn ? '🔊 ' : '🔇 ') + tr('เสียง', 'Sound'); }
+function applyLang() {
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-en]').forEach(el => { if (el.dataset.th === undefined) el.dataset.th = el.innerHTML; el.innerHTML = LANG === 'en' ? el.dataset.en : el.dataset.th; });
+  document.querySelectorAll('#nav a[href]').forEach(a => a.href = a.getAttribute('href').split('?')[0] + '?lang=' + LANG);
+  $('langBtn').textContent = LANG === 'en' ? 'ภาษาไทย' : 'English';
+  ui.toast.textContent = tr('จับยานด้วยแขน Chopsticks สำเร็จ', 'Caught by the chopstick arms');
+  renderEvents(); renderSpots(); soundLabel();
+}
+$('langBtn').onclick = () => { LANG = LANG === 'en' ? 'th' : 'en'; try { localStorage.setItem('simLang', LANG); } catch (e) { } applyLang(); };
 $('marks').innerHTML = EVENTS.slice(1).map(([t]) => `<span style="left:calc(${(t / T_END) * 100}% - 1px)"></span>`).join('');
 
 let t = 0, playing = true, speed = 1;
@@ -1048,7 +1181,7 @@ document.querySelectorAll('#cams button[data-tog]').forEach(b => b.onclick = () 
       soundOn = !soundOn; A.ctx.resume();
       if (!soundOn) A.master.gain.setTargetAtTime(0, A.ctx.currentTime, 0.05);
     } catch (err) { soundOn = false; }
-    b.classList.toggle('on', soundOn); b.textContent = (soundOn ? '🔊' : '🔇') + ' เสียง';
+    b.classList.toggle('on', soundOn); soundLabel();
   }
   refreshPanels();
 });
@@ -1069,7 +1202,7 @@ let lastEvCount = -1, uiTick = 0;
 function update(t, rt) {
   envUpdate(rt);
   const p = shipPos(t);
-  ship.position.set(p.x, p.y, 0);
+  ship.position.set(p.x, p.y, p.z || 0); ship.rotation.y = p.yaw || 0;
   const pitch = pitchDeg(t);
   ship.rotation.z = pitch * D2R;
 
@@ -1078,7 +1211,11 @@ function update(t, rt) {
   for (const f of flaps.aft) f.hinge.rotation.y = (f.side > 0 ? -1 : 1) * fa.aft * D2R;
 
   const open = armOpen(t) * D2R, dip = armDip(t);
-  for (const a of arms) { a.pivot.rotation.y = a.s * open; a.pivot.position.y = HC + dip; }
+  rig.rotation.y = armSwingDeg(t) * D2R;
+  const cy = (t < T_LOW0 ? HC + dip : carriage(t));
+  for (const a of arms) { a.pivot.rotation.y = a.s * open; a.pivot.position.y = cy; }
+  ENVX.carriage.position.y = cy - 3;
+  postUpdate(t, rt);
 
   const thr = throttle(t);
   plumes.forEach((pl, i) => {
@@ -1100,7 +1237,7 @@ function update(t, rt) {
   // telemetry
   const e = 0.05, a = shipPos(Math.max(0, t - e)), b = shipPos(Math.min(T_END, t + e));
   const dt = Math.min(T_END, t + e) - Math.max(0, t - e) || 1;
-  const vy = (b.y - a.y) / dt, vx = (b.x - a.x) / dt;
+  const vy = (b.y - a.y) / dt, vx = Math.hypot(b.x - a.x, (b.z || 0) - (a.z || 0)) / dt;
   if ((uiTick++ & 1) === 0) {
     ui.alt.textContent = Math.round(p.y).toLocaleString('en-US');
     ui.vs.textContent = (Math.abs(vy) < 0.05 ? 0 : vy).toFixed(1);
@@ -1110,7 +1247,7 @@ function update(t, rt) {
     ui.thr.textContent = Math.round(thr * 100 * (thr > 0.02 ? 1 : 0));
     ui.thrbar.style.width = (thr * 100) + '%';
     const at = atmos(Math.max(0, p.y));
-    $('envline').innerHTML = `อากาศรอบยาน <b>${at.T.toFixed(1)}°C</b> · ความหนาแน่น <b>${at.rho.toFixed(3)}</b> kg/m³ · ลมตะวันออกเฉียงใต้ <b>${at.wind.toFixed(1)}</b> m/s`;
+    $('envline').innerHTML = tr(`อากาศรอบยาน <b>${at.T.toFixed(1)}°C</b> · ความหนาแน่น <b>${at.rho.toFixed(3)}</b> kg/m³ · ลมตะวันออกเฉียงใต้ <b>${at.wind.toFixed(1)}</b> m/s`, `Air around ship <b>${at.T.toFixed(1)}°C</b> · density <b>${at.rho.toFixed(3)}</b> kg/m³ · SE wind <b>${at.wind.toFixed(1)}</b> m/s`);
     const [ph, cls] = phaseOf(t);
     if (ui.phase.textContent !== ph) { ui.phase.textContent = ph; ui.phase.className = 'phase ' + cls; }
   }
@@ -1119,12 +1256,15 @@ function update(t, rt) {
     evEls.forEach((li, i) => { li.classList.toggle('past', i < evCount); li.classList.toggle('now', i === evCount - 1); });
     lastEvCount = evCount;
   }
-  ui.toast.classList.toggle('show', t > T_CONTACT + 0.4);
+  const toastNow = (t > T_CONTACT + 0.4 && t < 33.5) ? 1 : t > T_GO1 - 0.5 ? 2 : 0;
+  if (toastNow) ui.toast.textContent = toastNow === 1 ? tr('จับยานด้วยแขน Chopsticks สำเร็จ', 'Caught by the chopstick arms') : tr('ยานถึงอาคารแล้ว พร้อมตรวจสภาพและซ่อมบำรุง', 'Ship is at the hangar, ready for inspection and refurbishment');
+  ui.toast.classList.toggle('show', !!toastNow);
   ui.scrub.value = t.toFixed(2);
   ui.tlabel.textContent = `T+${t.toFixed(1)} s`;
 }
 
 /* ---------------- loop ---------------- */
+applyLang();
 update(0, 0);
 setCam('follow');
 let last = performance.now(), frameN = 0;
@@ -1140,7 +1280,7 @@ function frame(now) {
     thermalMat.uniforms.uInv.value.copy(body.matrixWorld).invert();
     thermalMat.uniforms.uHeat.value = U.heat; thermalMat.uniforms.uLee.value = U.lee; thermalMat.uniforms.uEng.value = U.eng;
     plasmaShell.visible = plasmaSprite.visible = false;
-    SPOTS.forEach(([, p], i) => {
+    SPOTS.forEach(([, , p], i) => {
       const T = tempAt(p, U); $('tsv' + i).textContent = Math.round(T) + '°'; $('tsw' + i).style.background = tCss(T);
     });
   } else plasmaShell.visible = plasmaSprite.visible = true;
@@ -1172,26 +1312,27 @@ function frame(now) {
     };
     const down = new THREE.Vector3(0, -1, 0);
     setArrow(ARW.W, com, down, L(W / MN));
-    place(FL.W, com.clone().addScaledVector(down, L(W / MN) + 2.5), 'น้ำหนัก ' + fmt(W), true);
+    place(FL.W, com.clone().addScaledVector(down, L(W / MN) + 2.5), tr('น้ำหนัก ', 'Weight ') + fmt(W), true);
     const dm = F.drag.length();
     if (dm > 0.03 * MN) {
       const dd = F.drag.clone().normalize();
       setArrow(ARW.D, com, dd, L(dm / MN));
-      place(FL.D, com.clone().addScaledVector(dd, L(dm / MN) + 2.5), 'แรงต้านอากาศ ' + fmt(dm), true);
+      place(FL.D, com.clone().addScaledVector(dd, L(dm / MN) + 2.5), tr('แรงต้านอากาศ ', 'Drag ') + fmt(dm), true);
     } else { ARW.D.g.visible = false; place(FL.D, com, '', false); }
     if (F.thrust > 0.03 * MN) {
       const base = body.localToWorld(new THREE.Vector3(0, -1, 0));
       setArrow(ARW.T, base, F.axis, L(F.thrust / MN));
-      place(FL.T, base.clone().addScaledVector(F.axis, -4), 'แรงขับ ' + fmt(F.thrust), true);
+      place(FL.T, base.clone().addScaledVector(F.axis, -4), tr('แรงขับ ', 'Thrust ') + fmt(F.thrust), true);
     } else { ARW.T.g.visible = false; place(FL.T, com, '', false); }
     const rm = F.react.length();
     if (rm > 0.03 * MN) {
       const len = L(rm / 2 / MN);
       [[ARW.R1, 1], [ARW.R2, -1]].forEach(([a, s]) => {
-        const pin = body.localToWorld(new THREE.Vector3(0, PIN_Y, s * 5.05));
+        const pin = body.localToWorld(t >= T_SET ? new THREE.Vector3(0, 0, s * 3.2) : new THREE.Vector3(0, PIN_Y, s * 5.05));
         setArrow(a, pin.clone().addScaledVector(UP, -len), UP, len);
       });
-      place(FL.R, body.localToWorld(new THREE.Vector3(0, PIN_Y, 5.05)).addScaledVector(UP, -len - 2.5), 'แรงจากแขน ' + fmt(rm), true);
+      place(FL.R, body.localToWorld(t >= T_SET ? new THREE.Vector3(0, 0, 3.2) : new THREE.Vector3(0, PIN_Y, 5.05)).addScaledVector(UP, -len - 2.5),
+        (t >= T_SET ? tr('แรงจากแท่นรอง ', 'Stand reaction ') : tr('แรงจากแขน ', 'Arm reaction ')) + fmt(rm), true);
     } else { ARW.R1.g.visible = ARW.R2.g.visible = false; place(FL.R, com, '', false); }
     if ((frameN % 3) === 0) {
       $('fW').textContent = fmt(W); $('fD').textContent = fmt(dm); $('fT').textContent = fmt(F.thrust);
@@ -1207,8 +1348,8 @@ function frame(now) {
       const lp = body.worldToLocal(hit.point.clone());
       const T = tempAt(lp, thermalU(t));
       let part = PART.get(hit.object.userData.orig);
-      if (hit.object.userData.orig === flapMat) part = lp.y > 30 ? 'แผ่นปีกหน้า' : 'แผ่นปีกหลัง';
-      if (hit.object.userData.orig === darkMat && lp.y > 30) part = 'สลักจับ (catch pin)';
+      if (hit.object.userData.orig === flapMat) part = lp.y > 30 ? tr('แผ่นปีกหน้า', 'Forward flap') : tr('แผ่นปีกหลัง', 'Aft flap');
+      if (hit.object.userData.orig === darkMat && lp.y > 30) part = tr('สลักจับ (catch pin)', 'Catch pin');
       probe.innerHTML = `${part} · <b style="color:${tCss(T)}">~${Math.round(T)} °C</b>`;
       probe.style.display = 'block'; probe.style.left = mx + 'px'; probe.style.top = my + 'px';
     } else probe.style.display = 'none';
