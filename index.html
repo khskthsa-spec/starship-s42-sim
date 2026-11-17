@@ -71,7 +71,7 @@
   #log{top:66px;right:14px;width:290px;padding:12px 14px;max-height:calc(100% - 180px);overflow:auto}
   #log h4{margin:0 0 8px;font-size:12px;letter-spacing:.06em;color:var(--mute);font-weight:500}
   #events{list-style:none;margin:0;padding:0;font-size:12.5px;line-height:1.45}
-  #events li{display:grid;grid-template-columns:56px 1fr;gap:6px;padding:5px 0;border-top:1px solid var(--line);
+  #events li{display:grid;grid-template-columns:80px 1fr;gap:6px;padding:5px 0;border-top:1px solid var(--line);
     color:#5d6b78;transition:color .4s}
   #events li:first-child{border-top:0}
   #events li.past{color:var(--ink)}
@@ -91,7 +91,7 @@
   #scrub::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:0}
   #marks{position:absolute;left:7px;right:7px;top:0;bottom:0;pointer-events:none}
   #marks span{position:absolute;top:9px;width:2px;height:8px;background:var(--amber);opacity:.7;border-radius:1px}
-  #tlabel{font-family:"JetBrains Mono",monospace;font-size:13px;min-width:78px;text-align:right;color:var(--ink)}
+  #tlabel{font-family:"JetBrains Mono",monospace;font-size:13px;min-width:96px;text-align:right;color:var(--ink)}
   #speeds{display:flex;gap:2px;flex:none}
   #speeds button{padding:6px 9px;font-family:"JetBrains Mono",monospace;font-size:12px}
 
@@ -120,6 +120,8 @@
     #tlabel{min-width:64px;font-size:12px}
     #toast{top:auto;bottom:80px}
   }
+  #fade{position:fixed;inset:0;background:#04070b;display:none;place-items:center;opacity:0;pointer-events:none}
+  #fadeText{max-width:560px;text-align:center;color:#dfe7ee;font-size:17px;line-height:1.7;padding:0 24px;white-space:pre-line}
   #nav{left:50%;transform:translateX(-50%);bottom:76px;padding:4px;display:flex;gap:2px;align-items:center}
   #nav a{color:var(--mute);text-decoration:none;font:500 13px "Noto Sans Thai",sans-serif;padding:6px 12px;border-radius:8px}
   #nav a:hover{color:var(--ink)}
@@ -135,6 +137,7 @@
 </head>
 <body>
 <div id="app"></div>
+<div id="fade"><div id="fadeText"></div></div>
 <div id="loading">LOADING SIMULATION…</div>
 
 <div id="left">
@@ -146,7 +149,7 @@
     <div><label data-en="Vertical speed">ความเร็วแนวดิ่ง</label><b id="vs">0</b><i>m/s</i></div>
     <div><label data-en="Horizontal speed">ความเร็วแนวราบ</label><b id="hs">0</b><i>m/s</i></div>
     <div><label data-en="Tilt from vertical">มุมจากแนวตั้ง</label><b id="tilt">0</b><i data-en="deg">องศา</i></div>
-    <div><label data-en="Engines running">เครื่องยนต์ทำงาน</label><b id="eng">0</b><i data-en="of 6">จาก 6</i></div>
+    <div><label data-en="Engines running">เครื่องยนต์ทำงาน</label><b id="eng">0</b><i id="engOf">จาก 6</i></div>
     <div><label data-en="Throttle">แรงขับ</label><b id="thr">0</b><i>%</i></div>
   </div>
   <div class="tbar"><div id="thrbar"></div></div>
@@ -194,7 +197,7 @@
 <div id="controls" class="panel">
   <button class="ibtn" id="play" title="เล่น/หยุด">❚❚</button>
   <button class="ibtn" id="restart" title="เริ่มใหม่">↺</button>
-  <div class="tl"><input type="range" id="scrub" min="0" max="82" step="0.01" value="0"><div id="marks"></div></div>
+  <div class="tl"><input type="range" id="scrub" min="0" max="132" step="0.01" value="0"><div id="marks"></div></div>
   <span id="tlabel">T+0.0 s</span>
   <div class="seg" id="speeds">
     <button data-s="0.5">0.5×</button><button data-s="1" class="on">1×</button><button data-s="2">2×</button><button data-s="4">4×</button>
@@ -217,7 +220,7 @@ const ENVX = {};
 const T_VENT0 = 29.5, T_VENT1 = 40, T_SW0 = 42, T_SW1 = 48.5, T_LOW0 = 49, T_SET = 62, T_REL = 63.5, T_GO0 = 67, T_GO1 = 80;
 const SWING = 70, HC_LOW = 40, STAND_TOP = 4;
 
-const T_END = 82;
+const T_END = 82, T_OFF = 50, LIFT = 12, MECO_L = 37.5, SEP_L = 38.5, T_TOTAL = T_OFF + T_END;
 const HC = 110;              // top of catch arms (m)
 const R = 4.5;               // ship radius (9 m diameter)
 const SHIP_H = 52;           // V3 ship height (approx.)
@@ -731,7 +734,7 @@ function envUpdate(rt) {
 }
 // ISA-style atmosphere for the environment readout
 function atmos(h) {
-  const T = 26 - 0.0065 * h, Tk = T + 273.15, p = 101325 * Math.pow(1 - 0.0065 * h / 299.15, 5.2559);
+  const T = Math.max(-56.5, 26 - 0.0065 * h), Tk = T + 273.15, p = 101325 * Math.pow(1 - 0.0065 * h / 299.15, 5.2559);
   return { T, rho: p / (287.05 * Tk), wind: 6 + 0.004 * h };
 }
 
@@ -748,7 +751,8 @@ function atmos(h) {
   const ring = add(new THREE.TorusGeometry(4.6, 0.35, 10, 40), steel, 0, STAND_TOP - 0.35, 0); ring.rotation.x = Math.PI / 2;
   for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; add(new THREE.BoxGeometry(0.6, STAND_TOP - 1.7, 0.6), steel, 4.6 * Math.cos(a), (STAND_TOP + 1.7) / 2, 4.6 * Math.sin(a)); }
 }
-const VN = 600;
+const VN = 1400;
+const vScale = new Float32Array(VN).fill(1);
 const vPos = new Float32Array(VN * 3), vVel = new Float32Array(VN * 3), vLife = new Float32Array(VN), vMax = new Float32Array(VN), vSize = new Float32Array(VN), vAlpha = new Float32Array(VN);
 const vGeo = new THREE.BufferGeometry();
 vGeo.setAttribute('position', new THREE.BufferAttribute(vPos, 3)); vGeo.setAttribute('aSize', new THREE.BufferAttribute(vSize, 1)); vGeo.setAttribute('aAlpha', new THREE.BufferAttribute(vAlpha, 1));
@@ -778,7 +782,7 @@ function postUpdate(t, rt) {
       vPos[i * 3] = wp.x; vPos[i * 3 + 1] = wp.y; vPos[i * 3 + 2] = wp.z;
       const sp = 5 + Math.random() * 5;
       vVel[i * 3] = dir.x * sp + (Math.random() - 0.5) * 2; vVel[i * 3 + 1] = dir.y * sp + 0.5 + Math.random(); vVel[i * 3 + 2] = dir.z * sp + (Math.random() - 0.5) * 2;
-      vMax[i] = vLife[i] = 3 + Math.random() * 2.5;
+      vMax[i] = vLife[i] = 3 + Math.random() * 2.5; vScale[i] = 1;
     }
   }
   for (let i = 0; i < VN; i++) {
@@ -787,11 +791,189 @@ function postUpdate(t, rt) {
     const k = 1 - Math.max(0, vLife[i]) / vMax[i];
     vVel[i * 3] = vVel[i * 3] * 0.97 + 2.6 * dt; vVel[i * 3 + 1] = vVel[i * 3 + 1] * 0.98 + 0.4 * dt; vVel[i * 3 + 2] = vVel[i * 3 + 2] * 0.97 - 1.6 * dt;
     vPos[i * 3] += vVel[i * 3] * dt; vPos[i * 3 + 1] += vVel[i * 3 + 1] * dt; vPos[i * 3 + 2] += vVel[i * 3 + 2] * dt;
-    vSize[i] = 2 + 13 * Math.sqrt(k); vAlpha[i] = 0.55 * (1 - k) * Math.min(1, k * 8);
+    vSize[i] = (2 + 13 * Math.sqrt(k)) * vScale[i]; vAlpha[i] = 0.55 * (1 - k) * Math.min(1, k * 8);
   }
   vGeo.attributes.position.needsUpdate = vGeo.attributes.aSize.needsUpdate = vGeo.attributes.aAlpha.needsUpdate = true;
 }
 addEventListener('resize', () => { vMat.uniforms.uHalfH.value = innerHeight * 0.5 * Math.min(devicePixelRatio, 2); });
+
+/* ---------------- launch: Super Heavy booster, plumes, steam ---------------- */
+const BH = 68, HS = 3, STACK_SHIP = BH + HS + CENTER_OFF, MOUNT_TOP = 22.5;
+const LV = { lastRt: 0, acc: 0 };
+{
+  const g = new THREE.Group(); scene.add(g); LV.stack = g;
+  const m = (geo, mat, x = 0, y = 0, z = 0, parent = g) => { const me = new THREE.Mesh(geo, mat); me.position.set(x, y, z); me.castShadow = me.receiveShadow = true; parent.add(me); return me; };
+  const bSteel = new THREE.MeshStandardMaterial({ map: steelTex(BH / 1.83), metalness: 0.9, roughness: 0.32 });
+  m(new THREE.CylinderGeometry(R, R, BH, 96, 1, true), bSteel, 0, BH / 2, 0);
+  m(new THREE.CylinderGeometry(R, R, HS, 64, 1, true), darkMat, 0, BH + HS / 2, 0);
+  for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; const v = m(new THREE.BoxGeometry(0.3, 2.3, 0.7), lightSteel, (R + 0.05) * Math.cos(a), BH + HS / 2, (R + 0.05) * Math.sin(a)); v.rotation.y = -a; }
+  m(new THREE.BoxGeometry(0.6, BH - 10, 0.9), bSteel, -R - 0.2, BH / 2, 0);
+  // three large grid fins
+  const gc = document.createElement('canvas'); gc.width = gc.height = 128; const gx = gc.getContext('2d');
+  gx.fillStyle = '#2c2f33'; gx.fillRect(0, 0, 128, 128); gx.strokeStyle = '#80868d'; gx.lineWidth = 3;
+  for (let i = -128; i < 256; i += 16) { gx.beginPath(); gx.moveTo(i, 0); gx.lineTo(i + 128, 128); gx.stroke(); gx.beginPath(); gx.moveTo(i, 128); gx.lineTo(i + 128, 0); gx.stroke(); }
+  gx.lineWidth = 6; gx.strokeRect(3, 3, 122, 122);
+  const gt = new THREE.CanvasTexture(gc); gt.colorSpace = THREE.SRGBColorSpace;
+  const gridMat = new THREE.MeshStandardMaterial({ map: gt, metalness: .6, roughness: .5 });
+  for (let k = 0; k < 3; k++) {
+    const a = k * Math.PI * 2 / 3 + Math.PI / 2, fg = new THREE.Group(); fg.position.set(0, BH - 4.5, 0); fg.rotation.y = -a; g.add(fg);
+    m(new THREE.BoxGeometry(5.6, 4.4, 0.5), gridMat, R + 3.1, 0, 0, fg);
+    m(new THREE.BoxGeometry(0.8, 1.4, 1.4), darkMat, R + 0.3, 0, 0, fg);
+  }
+  // 33 Raptor engines (3 centre, 10 middle, 20 outer) + skirt
+  const bell = new THREE.CylinderGeometry(0.33, 0.62, 1.9, 18, 1, true); bell.translate(0, -0.95, 0);
+  const pos = []; [[3, 0.95, 0.5], [10, 2.45, 0.2], [20, 3.72, 0]].forEach(([n, r, off]) => { for (let i = 0; i < n; i++) { const a = (i + off) / n * Math.PI * 2; pos.push([r * Math.cos(a), r * Math.sin(a)]); } });
+  const im = new THREE.InstancedMesh(bell, bellMat, pos.length), mm = new THREE.Matrix4();
+  pos.forEach(([x, z], i) => { mm.makeTranslation(x, 0, z); im.setMatrixAt(i, mm); }); im.castShadow = true; g.add(im);
+  m(new THREE.CircleGeometry(R, 64).rotateX(Math.PI / 2), darkMat, 0, 0.02, 0);
+  m(new THREE.CylinderGeometry(R + 0.04, R + 0.12, 2.2, 64, 1, true), darkMat, 0, 1.1, 0);
+  // frost from cryogenic propellant
+  const frc = document.createElement('canvas'); frc.width = 128; frc.height = 256; const fx = frc.getContext('2d'), rr = rng(77);
+  fx.fillStyle = '#e6edf2'; fx.fillRect(0, 0, 128, 256);
+  for (let i = 0; i < 2500; i++) { const v = 200 + Math.floor(rr() * 55); fx.fillStyle = `rgb(${v},${v + 2},${Math.min(255, v + 5)})`; fx.fillRect(rr() * 128, rr() * 256, 2 + rr() * 3, 1 + rr() * 2); }
+  const ft = new THREE.CanvasTexture(frc); ft.colorSpace = THREE.SRGBColorSpace; ft.wrapS = ft.wrapT = THREE.RepeatWrapping; ft.repeat.set(6, 8);
+  LV.frostMat = new THREE.MeshStandardMaterial({ map: ft, roughness: 1, transparent: true, opacity: 0, depthWrite: false });
+  m(new THREE.CylinderGeometry(R + 0.05, R + 0.05, 56, 64, 1, true), LV.frostMat, 0, 33, 0);
+  const sf = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.09, R + 0.09, 26, 64, 1, true), LV.frostMat); sf.position.y = 15; body.add(sf); LV.shipFrost = sf;
+  // exhaust plume, glow, light
+  const pg = new THREE.Group(); pg.position.y = -1.9; g.add(pg); LV.plume = pg;
+  const outer = new THREE.CylinderGeometry(4.1, 15, 1, 40, 1, true); outer.translate(0, -0.5, 0);
+  const core = new THREE.CylinderGeometry(3.9, 6.5, 1, 40, 1, true); core.translate(0, -0.5, 0);
+  LV.pm = [plumeMat(0xff8a2e), plumeMat(0xd8ecff)];
+  LV.pOuter = new THREE.Mesh(outer, LV.pm[0]); LV.pCore = new THREE.Mesh(core, LV.pm[1]); pg.add(LV.pOuter, LV.pCore);
+  LV.pOuter.frustumCulled = LV.pCore.frustumCulled = false;
+  const gtx = glowTexture('rgba(255,250,235,1)', 'rgba(255,150,60,.55)');
+  LV.glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: gtx, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0 }));
+  LV.glow.position.y = -6; g.add(LV.glow);
+  LV.hsGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: gtx, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0 }));
+  LV.hsGlow.position.y = BH + HS / 2; LV.hsGlow.scale.set(34, 34, 1); g.add(LV.hsGlow);
+  LV.light = new THREE.PointLight(0xffa050, 0, 0, 2); LV.light.position.y = -12; g.add(LV.light);
+  // Max-Q condensation collar
+  LV.collarMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide });
+  LV.collar = new THREE.Mesh(new THREE.ConeGeometry(13, 34, 48, 1, true), LV.collarMat); LV.collar.position.y = BH + 8; g.add(LV.collar);
+}
+function launchVel(L) { const s = Math.max(0, L - LIFT); return { vx: s > 6 ? -1.8 * (s - 6) ** 2 : 0, vy: 1.8 * s * s + 4 * s }; }
+function launchBase(L) { const s = Math.max(0, L - LIFT); return { x: s > 6 ? -0.6 * (s - 6) ** 3 : 0, y: MOUNT_TOP + 0.6 * s ** 3 + 2 * s * s }; }
+const pitchFromV = v => { const sp = Math.hypot(v.vx, v.vy); return sp < 1 ? 0 : Math.asin(clamp(-v.vx / sp, -1, 1)); };
+const boosterInt = L => L < 10.5 ? 0 : L < LIFT ? 0.1 + 0.9 * smooth(10.5, LIFT, L) : L < MECO_L ? 1 : L < SEP_L ? 0.12
+  : (L > SEP_L + 3.5 && L < SEP_L + 8.5) ? 0.45 * smooth(SEP_L + 3.5, SEP_L + 4, L) * (1 - smooth(SEP_L + 8, SEP_L + 8.5, L)) : 0;
+const shipLaunchInt = L => L < 38 ? 0 : smooth(38, 38.5, L);
+const frostOf = L => smooth(0, 3, L) * (1 - smooth(LIFT, LIFT + 18, L)) * 0.6;
+function emitVapor(p, vx, vy, vz, life, scale) {
+  const i = vHead; vHead = (vHead + 1) % VN;
+  vPos[i * 3] = p.x; vPos[i * 3 + 1] = p.y; vPos[i * 3 + 2] = p.z;
+  vVel[i * 3] = vx; vVel[i * 3 + 1] = vy; vVel[i * 3 + 2] = vz; vMax[i] = vLife[i] = life; vScale[i] = scale;
+}
+function launchPhase(L) {
+  if (L < 8) return [tr('เตรียมปล่อย — เติมเชื้อเพลิง', 'Pre-launch: propellant loading'), ''];
+  if (L < 10.5) return [tr('นับถอยหลังช่วงสุดท้าย', 'Final countdown'), ''];
+  if (L < LIFT) return [tr('จุดเครื่องยนต์ 33 เครื่อง', 'Igniting 33 engines'), 'burn'];
+  if (L < 24) return [tr('ทะยานขึ้น', 'Liftoff and ascent'), 'burn'];
+  if (L < 30) return [tr('Max-Q — แรงดันอากาศสูงสุด', 'Max-Q: peak aerodynamic pressure'), 'burn'];
+  if (L < MECO_L) return [tr('เร่งความเร็วสู่ MECO', 'Accelerating toward MECO'), 'burn'];
+  if (L < 39.5) return [tr('Hot staging — แยกท่อน', 'Hot staging: separation'), 'burn'];
+  if (L < 44.5) return [tr('ยานมุ่งสู่วงโคจร / บูสเตอร์กลับลำ', 'Ship heads to orbit / booster flips back'), 'burn'];
+  return [tr('ยานอยู่ในวงโคจร ~22 ชั่วโมง', 'Ship in orbit for ~22 hours'), 'done'];
+}
+function launchUpdate(L, rt) {
+  envUpdate(rt);
+  const v = launchVel(L), base = launchBase(L), pitch = pitchFromV(v);
+  const ax = new THREE.Vector3(-Math.sin(pitch), Math.cos(pitch), 0);
+  ship.rotation.set(0, 0, pitch);
+  ship.position.set(base.x + ax.x * STACK_SHIP, base.y + ax.y * STACK_SHIP, 0);
+  if (L < SEP_L) { LV.stack.position.set(base.x, base.y, 0); LV.stack.rotation.set(0, 0, pitch); }
+  else {
+    const b0 = launchBase(SEP_L), v0 = launchVel(SEP_L), d = L - SEP_L;
+    LV.stack.position.set(b0.x + v0.vx * d, b0.y + v0.vy * d - 4.9 * d * d, 0);
+    LV.stack.rotation.set(0, 0, pitchFromV(v0) + Math.PI * smooth(SEP_L + 1, SEP_L + 5, L));
+  }
+  ship.updateMatrixWorld(true); LV.stack.updateMatrixWorld(true);
+  // booster plume
+  const bi = boosterInt(L), fl = 0.93 + 0.07 * Math.sin(rt * 47);
+  LV.plume.visible = bi > 0.01;
+  LV.pOuter.scale.set(1, (40 + 90 * bi) * fl, 1); LV.pCore.scale.set(1, (12 + 18 * bi) * fl, 1);
+  LV.pm[0].uniforms.uInt.value = bi * 1.3; LV.pm[1].uniforms.uInt.value = bi * 1.7; LV.pm.forEach(mt => mt.uniforms.uTime.value = rt);
+  LV.glow.material.opacity = bi; LV.glow.scale.setScalar(30 + 40 * bi);
+  LV.light.intensity = bi * 1.5e6;
+  LV.hsGlow.material.opacity = (L > 38 && L < 39) ? Math.sin(Math.PI * (L - 38)) : 0;
+  LV.collarMat.opacity = 0.35 * smooth(23, 25, L) * (1 - smooth(28, 30, L)) * (0.8 + 0.2 * Math.sin(rt * 20));
+  LV.frostMat.opacity = frostOf(L);
+  // ship engines after hot staging
+  const si = shipLaunchInt(L);
+  plumes.forEach(pl => {
+    pl.g.visible = si > 0.01; pl.g.scale.set(1, 0.5 + 0.8 * si, 1);
+    pl.mats[0].uniforms.uInt.value = si * 1.2; pl.mats[1].uniforms.uInt.value = si * 1.5; pl.mats.forEach(mt => mt.uniforms.uTime.value = rt);
+  });
+  hotDisks.forEach(d => d.material.opacity = si); glowSprite.material.opacity = si * 0.8; engineLight.intensity = si * 60000;
+  plasmaMat.opacity = 0; plasmaSprite.material.opacity = 0;
+  for (const f of [...flaps.fwd, ...flaps.aft]) f.hinge.rotation.y = 0;
+  // tower arms parked open
+  rig.rotation.y = 0;
+  for (const a of arms) { a.pivot.rotation.y = a.s * 38 * D2R; a.pivot.position.y = HC; }
+  ENVX.carriage.position.y = HC - 3;
+  // vapour: tank venting before launch, steam from the deluge at ignition
+  const dt = clamp(rt - LV.lastRt, 0, 0.05); LV.lastRt = rt;
+  if (playing) {
+    const vent = L < 10.5 ? smooth(0, 1.5, L) : 0, steam = (L > 9 && L < 24) ? (L < 10.5 ? 0.25 : 1) * (1 - smooth(17, 24, L)) : 0;
+    LV.acc += dt * (30 * vent + 150 * steam);
+    while (LV.acc >= 1) {
+      LV.acc -= 1;
+      if (Math.random() < (30 * vent) / (30 * vent + 150 * steam + 1e-6)) {
+        if (Math.random() < 0.5) {
+          const vv = VENTS[Math.floor(Math.random() * VENTS.length)], wp = body.localToWorld(new THREE.Vector3(vv[0], vv[1], vv[2]));
+          emitVapor(wp, vv[3] * 5, 1 + vv[4] * 4, vv[5] * 5, 3 + Math.random() * 2, 1);
+        } else {
+          const side = Math.random() < 0.5 ? 1 : -1, wp = LV.stack.localToWorld(new THREE.Vector3(side * (R + 0.3), 20 + Math.random() * 45, 0));
+          emitVapor(wp, side * 4, 0.5, (Math.random() - 0.5) * 2, 3 + Math.random() * 2, 1.2);
+        }
+      } else {
+        const a = Math.random() * Math.PI * 2, r = 8 + Math.random() * 6, sp = 18 + Math.random() * 24;
+        emitVapor(new THREE.Vector3(r * Math.cos(a), 2 + Math.random() * 3, r * Math.sin(a)), Math.cos(a) * sp, 3 + Math.random() * 11, Math.sin(a) * sp, 4 + Math.random() * 3, 3.5 + Math.random() * 1.5);
+      }
+    }
+  }
+  postUpdate(-1, rt);
+  // telemetry
+  if ((uiTick++ & 1) === 0) {
+    const sep = L >= SEP_L, alt = Math.max(0, sep ? ship.position.y - CENTER_OFF - MOUNT_TOP : base.y - MOUNT_TOP);
+    ui.alt.textContent = Math.round(alt).toLocaleString('en-US');
+    ui.vs.textContent = v.vy.toFixed(1); ui.hs.textContent = Math.abs(v.vx).toFixed(1);
+    ui.tilt.textContent = Math.round(Math.abs(pitch) / D2R);
+    const shipStage = L >= 38, n = shipStage ? (si > 0.02 ? 6 : 0) : (L >= MECO_L ? 3 : bi > 0.02 ? 33 : 0), of = shipStage ? 6 : 33;
+    ui.eng.textContent = n; $('engOf').textContent = tr(`จาก ${of}`, `of ${of}`);
+    const thrv = shipStage ? si : bi; ui.thr.textContent = Math.round(thrv * 100); ui.thrbar.style.width = (thrv * 100) + '%';
+    const at = atmos(alt);
+    $('envline').innerHTML = tr(`อากาศรอบยาน <b>${at.T.toFixed(1)}°C</b> · ความหนาแน่น <b>${at.rho.toFixed(3)}</b> kg/m³ · ลมตะวันออกเฉียงใต้ <b>${at.wind.toFixed(1)}</b> m/s`, `Air around vehicle <b>${at.T.toFixed(1)}°C</b> · density <b>${at.rho.toFixed(3)}</b> kg/m³ · SE wind <b>${at.wind.toFixed(1)}</b> m/s`);
+    const [ph, cls] = launchPhase(L);
+    if (ui.phase.textContent !== ph) { ui.phase.textContent = ph; ui.phase.className = 'phase ' + cls; }
+  }
+  ui.toast.classList.remove('show');
+}
+function clockStr(T) {
+  const two = n => String(Math.floor(n)).padStart(2, '0');
+  if (T < T_OFF) { const m = T - LIFT, a = Math.abs(m); return `T${m < 0 ? '−' : '+'}${two(a / 60)}:${two(a % 60)}`; }
+  const s = 22 * 3600 + 32 * 60 + 32 + (T - T_OFF); return `T+${two(s / 3600)}:${two((s % 3600) / 60)}:${two(s % 60)}`;
+}
+const thermalAt = T => T < T_OFF ? { heat: 22, lee: 22, eng: 25 + 1300 * shipLaunchInt(T) } : thermalU(T - T_OFF);
+function launchAudio(L, prevL) {
+  if (!A || !soundOn) return;
+  const c = A.ctx, now = c.currentTime, k = 0.08;
+  A.master.gain.setTargetAtTime(playing ? 0.9 : 0, now, 0.12);
+  if (!playing) return;
+  const target = L >= SEP_L ? ship.position : LV.stack.position;
+  const att = clamp(220 / camera.position.distanceTo(target), 0.05, 1), sa = Math.sqrt(att);
+  const roar = Math.max(L < SEP_L ? boosterInt(L) : 0, shipLaunchInt(L) * 0.6);
+  A.engG.gain.setTargetAtTime(1.5 * roar * sa, now, 0.05); A.engF.frequency.setTargetAtTime(160 + 900 * att, now, k);
+  A.rumG.gain.setTargetAtTime(0.7 * roar * sa, now, 0.05);
+  A.crG.gain.setValueAtTime(roar * att * (0.1 + 0.9 * Math.random() ** 3), now);
+  A.ventG.gain.setTargetAtTime(L < 10.5 ? 0.12 * smooth(0, 2, L) * sa : 0, now, 0.1);
+  const v = launchVel(L), sp = Math.hypot(v.vx, v.vy);
+  A.windG.gain.setTargetAtTime(0.25 * clamp(sp / 400, 0, 1) * sa * (L < 30 ? 1 : 0.4), now, k); A.windF.frequency.setTargetAtTime(200 + Math.min(sp, 600), now, k);
+  A.hissG.gain.setTargetAtTime(0, now, k); A.hydG.gain.setTargetAtTime(0, now, k); A.motG.gain.setTargetAtTime(0, now, k);
+  const crossed = E => prevL < E && L >= E && L - prevL < 0.5;
+  if (crossed(10.5)) oneShot({ f0: 60, f1: 25, dur: 2.5, g: 1.0 * sa, noise: 0.9, nf: 700 });
+  if (crossed(38)) oneShot({ f0: 140, f1: 40, dur: 1.2, g: 0.8 * sa, noise: 0.8, nf: 1800 });
+}
 
 /* ---------------- trajectory (scripted) ---------------- */
 const K = [
@@ -876,6 +1058,19 @@ const EVENTS = [
   [T_REL, 'แขนเปิด ปล่อยยาน', 'Arms open and release the ship'],
   [T_GO0, 'รถขนย้าย (SPMT) พายานไปอาคารตรวจสภาพ', 'Transporter (SPMT) carries the ship to the hangar for inspection'],
 ];
+const LAUNCH_EVENTS = [
+  [0, 'Stack ตั้งบนฐานปล่อย เริ่มเติมมีเทนและออกซิเจนเหลว (น้ำแข็งเกาะผิวถัง)', 'Stack on the mount; methane and liquid oxygen loading (frost forms on the tanks)'],
+  [8, 'นับถอยหลังช่วงสุดท้าย ระบบฉีดน้ำ (deluge) เริ่มทำงาน', 'Final countdown; water deluge starts'],
+  [10.5, 'จุดเครื่อง Raptor ทั้ง 33 เครื่องของ Super Heavy', 'All 33 Super Heavy Raptors ignite'],
+  [LIFT, 'Liftoff! ทะยานขึ้นจากฐานปล่อย', 'Liftoff!'],
+  [18, 'เริ่มเอียงลำ (pitch-over) มุ่งออกทะเล', 'Pitch-over toward the sea'],
+  [25, 'Max-Q: แรงดันอากาศสูงสุด', 'Max-Q: peak aerodynamic pressure'],
+  [MECO_L, 'MECO: ดับเครื่องบูสเตอร์ เหลือ 3 เครื่องกลาง', 'MECO: booster engines cut, three centre engines remain'],
+  [38, 'Hot staging: ยานจุดเครื่องขณะยังติดบูสเตอร์ แล้วแยกตัว', 'Hot staging: the ship lights its engines while still attached, then separates'],
+  [41, 'บูสเตอร์กลับลำ จุดเครื่อง boostback', 'Booster flips and fires its boostback burn'],
+  [44.5, 'ยานเข้าวงโคจร ปล่อย Starlink V3 26 ดวง โคจร ~22 ชม.', 'Ship reaches orbit, deploys 26 Starlink V3 satellites, ~22 h in orbit'],
+];
+const ALL_EVENTS = [...LAUNCH_EVENTS, ...EVENTS.map(([et, th, en]) => [et + T_OFF, th, en])];
 function phaseOf(t) {
   if (t < 14) return [tr('Belly flop — ร่อนลงแนวนอน', 'Belly flop: horizontal descent'), ''];
   if (t < 19.5) return [tr('Flip — จุดเครื่องและกลับลำตั้งตรง', 'Flip: ignition and turn to vertical'), 'burn'];
@@ -1120,7 +1315,7 @@ function setCam(mode) {
   camera.fov = 45; camera.updateProjectionMatrix();
   controls.enabled = mode !== 'tower';
   if (mode === 'follow') {
-    camera.position.copy(ship.position).add(new THREE.Vector3(70, 22, 95));
+    camera.position.copy(ship.position).add(t < T_OFF ? new THREE.Vector3(120, -20, 175) : new THREE.Vector3(70, 22, 95));
     controls.target.copy(ship.position);
   } else if (mode === 'free') {
     camera.position.set(230, 120, 270); controls.target.set(0, 85, 0);
@@ -1135,7 +1330,8 @@ const ui = { alt: $('alt'), vs: $('vs'), hs: $('hs'), tilt: $('tilt'), eng: $('e
   phase: $('phase'), scrub: $('scrub'), tlabel: $('tlabel'), play: $('play'), toast: $('toast'), events: $('events') };
 let evEls = [];
 function renderEvents() {
-  ui.events.innerHTML = EVENTS.map(([et, th, en]) => `<li><span class="t">T+${et.toFixed(1)}</span><span>${tr(th, en)}</span></li>`).join('');
+  ui.events.innerHTML = ALL_EVENTS.map(([et, th, en]) => `<li><span class="t">${clockStr(et)}</span><span>${tr(th, en)}</span></li>`).join('');
+  $('fadeText').textContent = tr('Ship 42 เข้าสู่วงโคจร และปล่อยดาวเทียม Starlink V3 26 ดวง\nโคจรรอบโลก 14 รอบ นานราว 22 ชั่วโมง\nจากนั้นจุดเครื่องกลับเข้าชั้นบรรยากาศ มุ่งหน้ากลับ Starbase', 'Ship 42 reaches orbit and deploys 26 Starlink V3 satellites\nIt circles Earth 14 times over about 22 hours\nthen fires its engine to re-enter and head back to Starbase');
   evEls = [...ui.events.children]; lastEvCount = -1;
 }
 function soundLabel() { $('soundBtn').textContent = (soundOn ? '🔊 ' : '🔇 ') + tr('เสียง', 'Sound'); }
@@ -1148,7 +1344,7 @@ function applyLang() {
   renderEvents(); renderSpots(); soundLabel();
 }
 $('langBtn').onclick = () => { LANG = LANG === 'en' ? 'th' : 'en'; try { localStorage.setItem('simLang', LANG); } catch (e) { } applyLang(); };
-$('marks').innerHTML = EVENTS.slice(1).map(([t]) => `<span style="left:calc(${(t / T_END) * 100}% - 1px)"></span>`).join('');
+$('marks').innerHTML = ALL_EVENTS.slice(1).map(([et]) => `<span style="left:calc(${(et / T_TOTAL) * 100}% - 1px)"></span>`).join('');
 
 let t = 0, playing = true, speed = 1;
 const setPlay = p => { playing = p; ui.play.textContent = p ? '❚❚' : '▶'; };
@@ -1199,7 +1395,7 @@ addEventListener('resize', () => {
 
 /* ---------------- update ---------------- */
 let lastEvCount = -1, uiTick = 0;
-function update(t, rt) {
+function updateLanding(t, rt) {
   envUpdate(rt);
   const p = shipPos(t);
   ship.position.set(p.x, p.y, p.z || 0); ship.rotation.y = p.yaw || 0;
@@ -1243,7 +1439,7 @@ function update(t, rt) {
     ui.vs.textContent = (Math.abs(vy) < 0.05 ? 0 : vy).toFixed(1);
     ui.hs.textContent = Math.abs(vx).toFixed(1);
     ui.tilt.textContent = Math.round(Math.abs(pitch));
-    ui.eng.textContent = thr > 0.02 ? 3 : 0;
+    ui.eng.textContent = thr > 0.02 ? 3 : 0; $('engOf').textContent = tr('จาก 6', 'of 6');
     ui.thr.textContent = Math.round(thr * 100 * (thr > 0.02 ? 1 : 0));
     ui.thrbar.style.width = (thr * 100) + '%';
     const at = atmos(Math.max(0, p.y));
@@ -1251,16 +1447,26 @@ function update(t, rt) {
     const [ph, cls] = phaseOf(t);
     if (ui.phase.textContent !== ph) { ui.phase.textContent = ph; ui.phase.className = 'phase ' + cls; }
   }
-  const evCount = EVENTS.filter(([et]) => t >= et).length;
+  const toastNow = (t > T_CONTACT + 0.4 && t < 33.5) ? 1 : t > T_GO1 - 0.5 ? 2 : 0;
+  if (toastNow) ui.toast.textContent = toastNow === 1 ? tr('จับยานด้วยแขน Chopsticks สำเร็จ', 'Caught by the chopstick arms') : tr('ยานถึงอาคารแล้ว พร้อมตรวจสภาพและซ่อมบำรุง', 'Ship is at the hangar, ready for inspection and refurbishment');
+  ui.toast.classList.toggle('show', !!toastNow);
+}
+let lastSeg = -1;
+function update(T, rt) {
+  const launching = T < T_OFF, seg = launching ? 0 : 1;
+  LV.stack.visible = launching; LV.shipFrost.visible = launching;
+  if (launching) launchUpdate(T, rt); else updateLanding(T - T_OFF, rt);
+  if (seg !== lastSeg && lastSeg !== -1 && camMode === 'follow') { lastSeg = seg; setCam('follow'); }
+  lastSeg = seg;
+  const fade = smooth(43.5, 45, T) * (1 - smooth(T_OFF, T_OFF + 1.5, T));
+  const fd = $('fade'); fd.style.opacity = fade; fd.style.display = fade > 0.001 ? 'grid' : 'none';
+  const evCount = ALL_EVENTS.filter(([et]) => T >= et).length;
   if (evCount !== lastEvCount) {
     evEls.forEach((li, i) => { li.classList.toggle('past', i < evCount); li.classList.toggle('now', i === evCount - 1); });
     lastEvCount = evCount;
   }
-  const toastNow = (t > T_CONTACT + 0.4 && t < 33.5) ? 1 : t > T_GO1 - 0.5 ? 2 : 0;
-  if (toastNow) ui.toast.textContent = toastNow === 1 ? tr('จับยานด้วยแขน Chopsticks สำเร็จ', 'Caught by the chopstick arms') : tr('ยานถึงอาคารแล้ว พร้อมตรวจสภาพและซ่อมบำรุง', 'Ship is at the hangar, ready for inspection and refurbishment');
-  ui.toast.classList.toggle('show', !!toastNow);
-  ui.scrub.value = t.toFixed(2);
-  ui.tlabel.textContent = `T+${t.toFixed(1)} s`;
+  ui.scrub.value = T.toFixed(2);
+  ui.tlabel.textContent = clockStr(T);
 }
 
 /* ---------------- loop ---------------- */
@@ -1271,12 +1477,12 @@ let last = performance.now(), frameN = 0;
 function frame(now) {
   const d = Math.min(0.05, (now - last) / 1000); last = now;
   const prevT = t;
-  if (playing) { t += d * speed; if (t >= T_END) { t = T_END; setPlay(false); } }
+  if (playing) { t += d * speed; if (t >= T_TOTAL) { t = T_TOTAL; setPlay(false); } }
   update(t, now / 1000);
   ship.updateMatrixWorld(true);
-  audioUpdate(t, prevT);
+  if (t < T_OFF) launchAudio(t, prevT); else audioUpdate(t - T_OFF, prevT - T_OFF);
   if (tempOn) {
-    const U = thermalU(t);
+    const U = thermalAt(t);
     thermalMat.uniforms.uInv.value.copy(body.matrixWorld).invert();
     thermalMat.uniforms.uHeat.value = U.heat; thermalMat.uniforms.uLee.value = U.lee; thermalMat.uniforms.uEng.value = U.eng;
     plasmaShell.visible = plasmaSprite.visible = false;
@@ -1299,8 +1505,9 @@ function frame(now) {
   camera.updateMatrixWorld();
   frameN++;
 
-  if (forceOn) {
-    const F = forcesAt(t), com = ship.position.clone();
+  if (forceOn && t < T_OFF) { Object.values(ARW).forEach(a => a.g.visible = false); Object.values(FL).forEach(d => d.style.display = 'none'); }
+  if (forceOn && t >= T_OFF) {
+    const tl = t - T_OFF, F = forcesAt(tl), com = ship.position.clone();
     const L = mn => mn * ARROW_PER_MN;
     const fmt = n => (n / MN).toFixed(2) + ' MN';
     const place = (el, pos, text, show) => {
@@ -1328,11 +1535,11 @@ function frame(now) {
     if (rm > 0.03 * MN) {
       const len = L(rm / 2 / MN);
       [[ARW.R1, 1], [ARW.R2, -1]].forEach(([a, s]) => {
-        const pin = body.localToWorld(t >= T_SET ? new THREE.Vector3(0, 0, s * 3.2) : new THREE.Vector3(0, PIN_Y, s * 5.05));
+        const pin = body.localToWorld(tl >= T_SET ? new THREE.Vector3(0, 0, s * 3.2) : new THREE.Vector3(0, PIN_Y, s * 5.05));
         setArrow(a, pin.clone().addScaledVector(UP, -len), UP, len);
       });
-      place(FL.R, body.localToWorld(t >= T_SET ? new THREE.Vector3(0, 0, 3.2) : new THREE.Vector3(0, PIN_Y, 5.05)).addScaledVector(UP, -len - 2.5),
-        (t >= T_SET ? tr('แรงจากแท่นรอง ', 'Stand reaction ') : tr('แรงจากแขน ', 'Arm reaction ')) + fmt(rm), true);
+      place(FL.R, body.localToWorld(tl >= T_SET ? new THREE.Vector3(0, 0, 3.2) : new THREE.Vector3(0, PIN_Y, 5.05)).addScaledVector(UP, -len - 2.5),
+        (tl >= T_SET ? tr('แรงจากแท่นรอง ', 'Stand reaction ') : tr('แรงจากแขน ', 'Arm reaction ')) + fmt(rm), true);
     } else { ARW.R1.g.visible = ARW.R2.g.visible = false; place(FL.R, com, '', false); }
     if ((frameN % 3) === 0) {
       $('fW').textContent = fmt(W); $('fD').textContent = fmt(dm); $('fT').textContent = fmt(F.thrust);
@@ -1346,7 +1553,7 @@ function frame(now) {
     const hit = ray.intersectObjects(shipMeshes, false)[0];
     if (hit) {
       const lp = body.worldToLocal(hit.point.clone());
-      const T = tempAt(lp, thermalU(t));
+      const T = tempAt(lp, thermalAt(t));
       let part = PART.get(hit.object.userData.orig);
       if (hit.object.userData.orig === flapMat) part = lp.y > 30 ? tr('แผ่นปีกหน้า', 'Forward flap') : tr('แผ่นปีกหลัง', 'Aft flap');
       if (hit.object.userData.orig === darkMat && lp.y > 30) part = tr('สลักจับ (catch pin)', 'Catch pin');
